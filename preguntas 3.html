@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Juego Romántico</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+    color: #3a1c1c;
+    margin: 0; padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  #container {
+    background: #fff6f6dd;
+    border-radius: 12px;
+    padding: 30px 40px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    animation: fadeIn 1s ease forwards;
+  }
+  h2 {
+    margin-top: 0;
+    color: #9e2a2b;
+  }
+  .question {
+    margin-bottom: 25px;
+  }
+  .options label {
+    display: block;
+    margin: 10px 0;
+    font-size: 1.05em;
+    cursor: pointer;
+    padding-left: 30px;
+    position: relative;
+    user-select: none;
+  }
+  .options input[type="radio"] {
+    position: absolute;
+    left: 0;
+    top: 8px;
+  }
+  .options input[type="text"] {
+    margin-left: 35px;
+    margin-top: 5px;
+    padding: 6px 8px;
+    font-size: 1em;
+    width: 90%;
+    border-radius: 5px;
+    border: 1.5px solid #d88b8b;
+  }
+  button {
+    background-color: #c44141;
+    border: none;
+    color: white;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    user-select: none;
+  }
+  button:hover {
+    background-color: #a32b2b;
+  }
+  #summary {
+    background: #f9e6e6;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  #summary h3 {
+    margin-top: 0;
+    color: #7a1a1a;
+  }
+  @keyframes fadeIn {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
+  }
+</style>
+</head>
+<body>
+
+<div id="container">
+  <h2 id="questionTitle"></h2>
+  <form id="questionForm">
+    <div class="options" id="optionsContainer"></div>
+    <button type="submit" id="nextBtn">Siguiente</button>
+  </form>
+
+  <div id="summary" style="display:none;">
+    <h3>Resumen de tus respuestas:</h3>
+    <ol id="answersList"></ol>
+  </div>
+</div>
+
+<audio id="bgMusic" loop>
+  <source src="decirte_adios_cuco.mp3" type="audio/mpeg" />
+  <!-- Cambia 'decirte_adios_cuco.mp3' por la ruta correcta de tu archivo -->
+  Tu navegador no soporta audio.
+</audio>
+
+<script>
+  const questions = [
+    { text: "¿Qué parte de nuestra historia merece ser contada como una película?", options: ["Cuando me di cuenta de que eras tú", "Nuestras primeras videollamadas largas", "Todo lo que hemos superado con amor", "Otra"] },
+    { text: "¿Qué frase mía te gustaría que siempre te dijera antes de dormir?", options: ["Eres mi lugar favorito", "No hay distancia que me aleje de ti", "Sueña conmigo, que yo lo haré contigo", "Otra"] },
+    { text: "¿Qué detalle mío te hace sentir más amada, aunque estemos lejos?", options: ["Cuando te escribo sin razón", "Cuando te escucho con el corazón", "Cuando te recuerdo cosas pequeñas", "Otra"] },
+    { text: "¿Qué parte de tu día te gustaría que viviéramos juntos, aunque sea por pantalla?", options: ["Verte despertar con tu carita dormida", "Compartir el almuerzo y contarnos cosas", "Dormir abrazados, aunque sea en silencio", "Otra"] },
+    { text: "¿Cuál sería la primera caricia que te daría si estuvieras frente a mí?", options: ["Te tocaría el rostro con ternura", "Te tomaría de la cintura y te acercaría", "Te abrazaría fuerte sin soltarte", "Otra"] },
+    { text: "¿Cuándo piensas más en mí durante el día?", options: ["Cuando escuchas una canción que nos une", "Cuando ves algo que te hace pensar “se lo diría a él”", "Cuando te acuestas y me haces falta", "Otra"] },
+    { text: "¿Qué palabra inventarías para describir lo que sientes por mí?", options: ["Una mezcla de deseo y ternura", "Una palabra que signifique “mi amor imposible”", "Un nombre secreto que solo tú usarías", "Otra"] },
+    { text: "¿Qué canción dirías que cuenta nuestra historia?", options: ["Una que te hace pensar en mí cada vez", "Una lenta que te toca el corazón", "Una que te hace querer correr a abrazarme", "Otra"] },
+    { text: "¿Qué gesto mío te gustaría que se repitiera siempre?", options: ["Mi forma de mirarte con ganas incluso por pantalla", "Cómo te hablo cuando estás sensible", "Cómo te llamo por ese apodo especial", "Otra"] },
+    { text: "¿Cómo te imaginas nuestro primer amanecer juntos?", options: ["Despertando envueltos en caricias", "Desayunando lento, sin apuro", "Mirándonos sin decir nada, solo sonriendo", "Otra"] },
+    { text: "¿Qué parte de ti crees que solo yo entiendo o valoro?", options: ["Tu sensibilidad cuando finges estar fuerte", "Tu forma única de amar con todo", "Lo linda que eres incluso cuando no lo crees", "Otra"] },
+    { text: "¿Qué harías para sorprenderme y hacerme sentir amado hasta las lágrimas?", options: ["Mandarme un mensaje desde el alma", "Decirme algo que nunca te atreviste", "Recordarme lo importante que soy para ti", "Otra"] },
+    { text: "Si estuviéramos en videollamada y quisieras empezar a coquetear… ¿cómo lo harías?", options: ["Me mirarías con esa sonrisa traviesa que sabes usar", "Te acomodarías lentamente, dejando ver un poco más", "Me dirías algo ambiguo que solo nosotros entendemos", "Otra"] },
+    { text: "¿Qué detalle sutil tuyo me mostrarías solo para provocarme un poco?", options: ["Cómo juegas con tus labios sin decir nada", "Un movimiento lento con tus manos por tu cuerpo", "Tu forma de mirarme cuando sabes lo que quiero", "Otra"] },
+    { text: "¿Qué parte de tu cuerpo me enseñarías solo a mí, si nadie más pudiera verla?", options: ["Tu abdomen o tus senos", "Tus muslos o tus caderas", "Todo tu cuerpo, si supieras que es solo para mí", "Te mando las pruebas por privado...", "Otra"] },
+    { text: "¿Alguna vez te has tocado pensando en mí mientras hablábamos por videollamada o mensaje?", options: ["Sí, más de una vez", "Solo con escuchar tu voz ya me excito", "Aún no, pero me dan muchas ganas", "Prefiero contártelo en privado"] },
+    { text: "¿Qué zona de tu cuerpo te gustaría que explore con mi boca si estuviera contigo?", options: ["Tu cuello y orejas", "Tus senos", "Tus partes más íntimas", "Otra"] },
+    { text: "¿Qué parte de mí te imaginas besando cuando estás sola?", options: ["Mis labios", "Mi pecho y abdomen", "Entre mis piernas", "Otra"] },
+    { text: "¿Qué juego íntimo virtual te gustaría que probáramos juntos?", options: ["Retos calientes por videollamada", "Castigos suaves si uno falla", "Juguetes a distancia", "Otra"] },
+    { text: "¿Cómo me harías perder el control si esta noche estuviéramos solos por llamada?", options: ["Hablándome sucio y lento", "Tocándote mientras me miras sin hablar", "Ordenándome qué hacer con mi cuerpo", "Otra"] }
+  ];
+
+  let currentQuestion = 0;
+  const answers = [];
+
+  const questionTitle = document.getElementById('questionTitle');
+  const optionsContainer = document.getElementById('optionsContainer');
+  const questionForm = document.getElementById('questionForm');
+  const nextBtn = document.getElementById('nextBtn');
+  const summaryDiv = document.getElementById('summary');
+  const answersList = document.getElementById('answersList');
+  const bgMusic = document.getElementById('bgMusic');
+
+  function showQuestion() {
+    questionTitle.textContent = `Pregunta ${currentQuestion + 1}: ${questions[currentQuestion].text}`;
+    optionsContainer.innerHTML = '';
+
+    const opts = questions[currentQuestion].options;
+    opts.forEach((opt, i) => {
+      const optionId = `option${i}`;
+      const label = document.createElement('label');
+      label.setAttribute('for', optionId);
+      label.textContent = opt;
+
+      if(opt === 'Otra') {
+        // Radio + text input
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'answer';
+        radio.id = optionId;
+        radio.value = opt;
+        label.prepend(radio);
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Escribe tu respuesta aquí...';
+        input.className = 'other-input';
+        input.style.display = 'none';
+
+        radio.addEventListener('change', () => {
+          input.style.display = 'block';
+          // deseleccionar otros inputs en esta pregunta (si hubiera)
+          const otherInputs = optionsContainer.querySelectorAll('.other-input');
+          otherInputs.forEach(inp => {
+            if (inp !== input) inp.style.display = 'none';
+          });
+        });
+
+        label.appendChild(input);
+      } else {
+        // solo radio
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'answer';
+        radio.id = optionId;
+        radio.value = opt;
+        label.prepend(radio);
+      }
+
+      optionsContainer.appendChild(label);
+    });
+  }
+
+  questionForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const selectedRadio = questionForm.answer.value;
+    if (!selectedRadio) {
+      alert('Por favor, selecciona una opción o escribe tu respuesta.');
+      return;
+    }
+    let answer = selectedRadio;
+    if(selectedRadio === 'Otra') {
+      // busca input visible y toma su valor
+      const inputText = optionsContainer.querySelector('.other-input');
+      if(inputText && inputText.style.display !== 'none') {
+        if(inputText.value.trim() === '') {
+          alert('Por favor, escribe tu respuesta en el campo "Otra".');
+          return;
+        }
+        answer = inputText.value.trim();
+      } else {
+        alert('Por favor, escribe tu respuesta en el campo "Otra".');
+        return;
+      }
+    }
+    answers.push(answer);
+    currentQuestion++;
+    if(currentQuestion < questions.length) {
+      showQuestion();
+      questionForm.reset();
+    } else {
+      showSummary();
+    }
+  });
+
+  function showSummary() {
+    questionForm.style.display = 'none';
+    questionTitle.textContent = "Gracias por responder todas las preguntas.";
+    summaryDiv.style.display = 'block';
+    answersList.innerHTML = '';
+    answers.forEach((ans, i) => {
+      const li = document.createElement('li');
+      li.textContent = `Pregunta ${i + 1}: ${ans}`;
+      answersList.appendChild(li);
+    });
+  }
+
+  // iniciar primera pregunta
+  showQuestion();
+
+  // Intenta reproducir música al cargar (pero puede pedir interacción por navegador)
+  window.onload = () => {
